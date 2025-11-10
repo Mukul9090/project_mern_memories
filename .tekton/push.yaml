@@ -3,7 +3,7 @@ kind: PipelineRun
 metadata:
   annotations:
     pipelinesascode.tekton.dev/max-keep-runs: "5"
-    pipelinesascode.tekton.dev/on-event: pull_request
+    pipelinesascode.tekton.dev/on-event: "[push, pull_request]"
     pipelinesascode.tekton.dev/on-target-branch: main
     pipelinesascode.tekton.dev/task: git-clone
   name: pipelinerun-generic
@@ -31,16 +31,76 @@ spec:
         workspace: source
       - name: basic-auth
         workspace: basic-auth
-    - displayName: Task with no effect
-      name: noop-task
+    - displayName: Show repository info and list files
+      name: show-info
       runAfter:
       - fetch-repository
       taskSpec:
         steps:
-        - image: registry.access.redhat.com/ubi9/ubi-micro
-          name: noop-task
+        - image: registry.access.redhat.com/ubi9/ubi-minimal
+          name: show-info
           script: |
-            exit 0
+            #!/bin/sh
+            set -e
+            echo "=========================================="
+            echo "Repository Information"
+            echo "=========================================="
+            echo "Repository URL: $(params.repo_url)"
+            echo "Revision: $(params.revision)"
+            echo "Working Directory: $(workspaces.source.path)"
+            echo ""
+            cd $(workspaces.source.path)
+            echo "=========================================="
+            echo "Current Directory Contents"
+            echo "=========================================="
+            pwd
+            echo ""
+            echo "Files and directories:"
+            ls -la
+            echo ""
+            echo "=========================================="
+            echo "Git Information (if available)"
+            echo "=========================================="
+            if command -v git >/dev/null 2>&1; then
+              git --version
+              echo "Current branch:"
+              git branch -a 2>/dev/null || echo "No branch info available"
+              echo ""
+              echo "Last commit:"
+              git log -1 --oneline 2>/dev/null || echo "No commit info available"
+            else
+              echo "Git not available in container"
+            fi
+            echo ""
+            echo "=========================================="
+            echo "Docker Configuration Check"
+            echo "=========================================="
+            if [ -f "docker-compose.yml" ]; then
+              echo "✓ docker-compose.yml found"
+              echo "First few lines:"
+              head -5 docker-compose.yml
+            else
+              echo "✗ docker-compose.yml not found"
+            fi
+            echo ""
+            if [ -d ".tekton" ]; then
+              echo "✓ .tekton directory found"
+              echo "Contents:"
+              ls -la .tekton/
+            else
+              echo "✗ .tekton directory not found"
+            fi
+            echo ""
+            if [ -d "client" ]; then
+              echo "✓ client directory found"
+            fi
+            if [ -d "server" ]; then
+              echo "✓ server directory found"
+            fi
+            echo ""
+            echo "=========================================="
+            echo "Pipeline completed successfully!"
+            echo "=========================================="
           workingDir: $(workspaces.source.path)
         workspaces:
         - name: source
