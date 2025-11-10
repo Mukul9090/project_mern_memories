@@ -1,0 +1,29 @@
+# docker-compose.override.yml
+# This file is automatically merged with docker-compose.yml
+# Copy this to docker-compose.override.yml to customize for local development
+# Docker Compose automatically uses override files if they exist
+
+services:
+  server:
+    # Override environment variables for development
+    environment:
+      - PORT=5000
+      - CONNECTION_URL=${MONGODB_CONNECTION_URL:-mongodb+srv://js_mastery:123123123@practice.jto9p.mongodb.net/test}
+    # Add volume mounting for hot-reload during development (optional)
+    # volumes:
+    #   - ./server:/app
+    #   - /app/node_modules
+    # Uncomment the command below to use nodemon for auto-reload
+    # command: npm run dev
+
+  client:
+    # Override build args for development
+    build:
+      args:
+        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:5000}
+    # Add volume mounting for hot-reload during development (optional)
+    # This would require a different Dockerfile setup for development
+    # volumes:
+    #   - ./client/src:/app/src
+    #   - ./client/public:/app/public
+
