@@ -2,7 +2,7 @@
 # This file is automatically merged with docker-compose.yml
 # Copy this to docker-compose.override.yml to customize for local development
 # Docker Compose automatically uses override files if they exist
-
+ 
 services:
   server:
     # Override environment variables for development
